@@ -1,13 +1,2 @@
 ﻿  main.c
-c:\users\sean\desktop\sha-256\sha\sha\main.c(62): warning C4552: '+': result of expression not used
-c:\users\sean\desktop\sha-256\sha\sha\main.c(34): warning C4101: 'T2': unreferenced local variable
-c:\users\sean\desktop\sha-256\sha\sha\main.c(32): warning C4101: 'a': unreferenced local variable
-c:\users\sean\desktop\sha-256\sha\sha\main.c(32): warning C4101: 'e': unreferenced local variable
-c:\users\sean\desktop\sha-256\sha\sha\main.c(32): warning C4101: 'b': unreferenced local variable
-c:\users\sean\desktop\sha-256\sha\sha\main.c(32): warning C4101: 'f': unreferenced local variable
-c:\users\sean\desktop\sha-256\sha\sha\main.c(32): warning C4101: 'c': unreferenced local variable
-c:\users\sean\desktop\sha-256\sha\sha\main.c(34): warning C4101: 'T1': unreferenced local variable
-c:\users\sean\desktop\sha-256\sha\sha\main.c(32): warning C4101: 'h': unreferenced local variable
-c:\users\sean\desktop\sha-256\sha\sha\main.c(32): warning C4101: 'g': unreferenced local variable
-c:\users\sean\desktop\sha-256\sha\sha\main.c(32): warning C4101: 'd': unreferenced local variable
   SHA.vcxproj -> C:\Users\Sean\Desktop\SHA-256\SHA\Debug\SHA.exe

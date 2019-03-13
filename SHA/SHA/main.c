@@ -24,10 +24,29 @@ uint32_t Maj(uint32_t x, uint32_t y, uint32_t z);
 
 void sha256();
 
+union msgblock {
+	uint8_t e[64];
+	uint32_t t[16];
+	uint64_t s[8];
+};
 
 int main(int argc, char *argv[]) 
 {
-	sha256();
+	union msgblock M;
+
+	uint64_t nobytes;
+
+	FILE* f;
+	f = fopen("write.c", "r");
+
+	while (!feof(f)) 
+	{
+		nobytes = fread(M.e, 1, 64, f);
+		printf("%llu\n", nobytes);
+	
+	}
+
+	//sha256();
 	return 0;
 }
 

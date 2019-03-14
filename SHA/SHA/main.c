@@ -34,16 +34,38 @@ int main(int argc, char *argv[])
 {
 	union msgblock M;
 
+	uint64_t nobits = 0;
+
 	uint64_t nobytes;
 
 	FILE* f;
 	f = fopen("write.c", "r");
 
+	// reading in from a file
 	while (!feof(f)) 
 	{
 		nobytes = fread(M.e, 1, 64, f);
-		printf("%llu\n", nobytes);
-	
+		// printing number of bytes in file in 64 block buckets
+		printf("Read bytes: %2llu bytes\n", nobytes);
+		// calculating the total bits within the byte 
+		nobits = nobits + (nobytes * 8);
+		if (nobytes < 56) {
+			printf("Found block with less than 55 bytes\n");
+			M.e[nobytes] = 0x80;
+			while (nobytes < 56) {
+				nobytes = nobytes + 1;
+				M.e[nobytes] = 0x00;
+			}
+			M.s[7] = nobits;
+		}
+	}
+
+	fclose(f);
+
+	for (int i = 0; i < 64; i++)
+	{
+		printf("%x ", M.e[i]);
+		printf("\n");
 	}
 
 	//sha256();

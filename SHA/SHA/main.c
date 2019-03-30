@@ -33,19 +33,33 @@ uint32_t Ch(uint32_t x, uint32_t y, uint32_t z);
 uint32_t Maj(uint32_t x, uint32_t y, uint32_t z);
 
 // Calculates the SHA256 hash of file
-void sha256(FILE *msgf);
+uint32_t * sha256(FILE *msgf, uint32_t H[8]);
 
 // Retrieves the next message block
 int nextmsgblock(FILE *msgf, union msgblock *M, enum status *S, uint64_t *nobits);
 
+// Returns user specified file name
+FILE* fileHandler();
+
+
 int main(int argc, char *argv[]) 
 {
-	// open file initially
-	FILE* msgf;
-	msgf = fopen("README.md", "r");
+	// The Hash value. (Section 6.2)
+	uint32_t H[8] =
+	{
+		0x6a09e667, 0xbb67ae85,
+		0x3c6ef372, 0xa54ff53a,
+		0x510e527f, 0x9b05688c,
+		0x1f83d9ab, 0x5be0cd19
+	};
+
+	// get the file name
+	FILE* msgf = fileHandler();
 
 	// run the SHA algorithm on the file
-	sha256(msgf);
+	sha256(msgf, H);
+
+	printf("%08x %08x %08x %08x %08x %08x %08x %08x \n", H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]);
 
 	// close the file
 	fclose(msgf);
@@ -53,8 +67,29 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+FILE* fileHandler()
+{
+	int userInput;
+	char fileName[] = "EmptyFile.txt";
+	// open file initially
+	FILE* msgf;
+	printf("Please Enter file name: \n ");
+	scanf("%s", &fileName);
+
+	msgf = fopen(fileName, "r");
+	while (msgf == NULL)
+	{
+		printf("Please make sure file exists: \n ");
+		printf("Please Enter file name: \n ");
+		scanf("%s", &fileName);
+		msgf = fopen(fileName, "r");
+	}
+
+	return msgf;
+}
+
 // sketch of SHA 256 algorithm
-void sha256(FILE *msgf)
+uint32_t * sha256(FILE *msgf, uint32_t H[8])
 {
 	// current message block
 	union msgblock M;
@@ -93,14 +128,7 @@ void sha256(FILE *msgf)
 	// Two temporary variables (SECTION 6.2).
 	uint32_t T1, T2;
 
-	// The Hash value. (Section 6.2)
-	uint32_t H[8] = 
-	{
-		0x6a09e667, 0xbb67ae85,
-		0x3c6ef372, 0xa54ff53a,
-		0x510e527f, 0x9b05688c,
-		0x1f83d9ab, 0x5be0cd19
-	};
+
 
 	int i, t; 
 	// loop through the message blocks as per page 22
@@ -145,7 +173,8 @@ void sha256(FILE *msgf)
 		H[6] = g + H[6]; H[7] = h + H[7];
 
 	}
-	printf("%08x %08x %08x %08x %08x %08x %08x %08x \n", H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]);
+
+	return H;
 }
 
 int nextmsgblock(FILE *msgf, union msgblock *M, enum status *S, uint64_t *nobits)

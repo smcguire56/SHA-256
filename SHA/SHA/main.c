@@ -1,10 +1,21 @@
 // Sean McGuire
 // The secure Hash Algorithm 256 
+// https://ws680.nist.gov/publication/get_pdf.cfm?pub_id=919060 
 
 // input/ output header files.
 #include <stdio.h>
 // for using fixed bit length integers.
 #include <stdint.h>
+
+// Represents the message block
+union msgblock {
+	uint8_t e[64];
+	uint32_t t[16];
+	uint64_t s[8];
+};
+
+// the status for padding
+enum status { READ, PAD0, PAD1, FINISH };
 
 // see sections 4.1.2 and 4.2.2 for definitions. 
 uint32_t sig0(uint32_t x);
@@ -25,16 +36,7 @@ uint32_t Maj(uint32_t x, uint32_t y, uint32_t z);
 void sha256(FILE *msgf);
 
 // Retrieves the next message block
-int nextmsgblock(FILE *f, union msgblock *M, enum status *S, uint64_t *nobits);
-
-union msgblock {
-	uint8_t e[64];
-	uint32_t t[16];
-	uint64_t s[8];
-};
-
-// the status for padding
-enum status {READ, PAD0, PAD1, FINISH};
+int nextmsgblock(FILE *msgf, union msgblock *M, enum status *S, uint64_t *nobits);
 
 int main(int argc, char *argv[]) 
 {
@@ -63,25 +65,9 @@ void sha256(FILE *msgf)
 	// the status of the message blocks
 	enum status S = READ;
 
-	// Message schedule (Section 6.2)
-	uint32_t W[64];
-	// Working variables (Section 6.2)
-	uint32_t a, b, c, d, e, f, g, h;
-	// Two temporary variables (SECTION 6.2).
-	uint32_t T1, T2;
-
-	// The Hash value. (Section 6.2)
-	uint32_t H[8] = 
-	{
-		0x6a09e667, 0xbb67ae85,
-		0x3c6ef372, 0xa54ff53a,
-		0x510e527f, 0x9b05688c,
-		0x1f83d9ab, 0x5be0cd19
-	};
-
 	// section 4.2.2
 	// The K constant
-	uint32_t K [] = {
+	uint32_t K[] = {
 	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
 	0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
 	0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
@@ -98,14 +84,29 @@ void sha256(FILE *msgf)
 	0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
 	0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
 	0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-  };
+	};
+
+	// Message schedule (Section 6.2)
+	uint32_t W[64];
+	// Working variables (Section 6.2)
+	uint32_t a, b, c, d, e, f, g, h;
+	// Two temporary variables (SECTION 6.2).
+	uint32_t T1, T2;
+
+	// The Hash value. (Section 6.2)
+	uint32_t H[8] = 
+	{
+		0x6a09e667, 0xbb67ae85,
+		0x3c6ef372, 0xa54ff53a,
+		0x510e527f, 0x9b05688c,
+		0x1f83d9ab, 0x5be0cd19
+	};
 
 	int i, t; 
 	// loop through the message blocks as per page 22
 	while (nextmsgblock(msgf, &M, &S, &nobits)) {
 
-		// for loop, from page 22, W[t] = M[t] 
-		// for 0 <= t <= 15
+		// for loop, from page 22, W[t] = M[t] for 0 <= t <= 15
 		for (t = 0; t < 16; t++)
 		{
 			W[t] = M.t[t];
@@ -117,7 +118,7 @@ void sha256(FILE *msgf)
 			W[t] = sig1(W[t - 2]) + W[t - 7] + sig0(W[t - 15]) + W[t - 16];
 		}
 
-		// Initialize a, b, c, d and e as per stpe 2.(Page 19)
+		// Initialize a, b, c, d and e as per step 2.(Page 22)
 		a = H[0]; b = H[1]; c = H[2]; d = H[3]; 
 		e = H[4]; f = H[5]; g = H[6]; h = H[7];
 
@@ -169,7 +170,7 @@ int nextmsgblock(FILE *msgf, union msgblock *M, enum status *S, uint64_t *nobits
 		*S = FINISH;
 	}
 	// if s was PAD1, set the first bit of M  to 1.
-	if (S == PAD1) {
+	if (*S == PAD1) {
 		M->e[0] = 0x80;
 		// keep the loop in 256 for one more iteration
 		return 1;
@@ -190,7 +191,7 @@ int nextmsgblock(FILE *msgf, union msgblock *M, enum status *S, uint64_t *nobits
 			M->e[nobytes] = 0x00;
 		}
 		// append the file size in bits as a unsigned 64 bit
-		M->s[7] = nobits;
+		M->s[7] = *nobits;
 		// we are finished
 		*S = FINISH;
 	// otherwise check if we can put some padding in this message block

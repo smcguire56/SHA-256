@@ -21,8 +21,11 @@ uint32_t SIG1(uint32_t x);
 uint32_t Ch(uint32_t x, uint32_t y, uint32_t z);
 uint32_t Maj(uint32_t x, uint32_t y, uint32_t z);
 
+// Calculates the SHA256 hash of file
+void sha256(FILE *msgf);
 
-void sha256();
+// Retrieves the next message block
+int nextmsgblock(FILE *f, union msgblock *M, enum status *S, uint64_t *nobits);
 
 union msgblock {
 	uint8_t e[64];
@@ -35,73 +38,31 @@ enum status {READ, PAD0, PAD1, FINISH};
 
 int main(int argc, char *argv[]) 
 {
-	union msgblock M;
+	// open file initially
+	FILE* msgf;
+	msgf = fopen("README.md", "r");
 
-	uint64_t nobits = 0;
+	// run the SHA algorithm on the file
+	sha256(msgf);
 
-	uint64_t nobytes;
+	// close the file
+	fclose(msgf);
 
-	enum status S = READ;
-
-	FILE* f;
-	f = fopen("write.c", "r");
-
-	// reading in from a file
-	while (!feof(f)) 
-	{
-		nobytes = fread(M.e, 1, 64, f);
-		// printing number of bytes in file in 64 block buckets
-		printf("Read bytes: %2llu bytes\n", nobytes);
-		// calculating the total bits within the byte 
-		nobits = nobits + (nobytes * 8);
-		if (nobytes < 56) {
-			printf("Found block with less than 55 bytes\n");
-			M.e[nobytes] = 0x80;
-			while (nobytes < 56) {
-				nobytes = nobytes + 1;
-				M.e[nobytes] = 0x00;
-			}
-			M.s[7] = nobits;
-			S = FINISH;
-		}
-		else if (nobytes < 64) {
-			S = PAD0;
-			M.e[nobytes] = 0x80;
-			while (nobytes < 64) {
-				nobytes = nobytes + 1;
-				M.e[nobytes] = 0x00;
-			}
-		}
-		else if (feof(f)) {
-			S = PAD1;
-		}
-	}
-
-	if (S == PAD0 || S == PAD1) {
-		for (int i = 0; i < 56; i++) {
-			M.e[i] = 0x00;
-		}
-		M.s[7] = nobits;
-	}
-	if (S == PAD1) {
-		M.e[0] = 0x08;
-	}
-
-	fclose(f);
-
-	for (int i = 0; i < 64; i++)
-	{
-		printf("%x ", M.e[i]);
-		printf("\n");
-	}
-
-	//sha256();
 	return 0;
 }
 
-// Initial sketch of SHA 256 algorithm
-void sha256() 
+// sketch of SHA 256 algorithm
+void sha256(FILE *msgf)
 {
+	// current message block
+	union msgblock M;
+
+	// the number of bits read from the file 
+	uint64_t nobits = 0;
+
+	// the status of the message blocks
+	enum status S = READ;
+
 	// Message schedule (Section 6.2)
 	uint32_t W[64];
 	// Working variables (Section 6.2)
@@ -112,14 +73,10 @@ void sha256()
 	// The Hash value. (Section 6.2)
 	uint32_t H[8] = 
 	{
-		0x6a09e667,
-		0xbb67ae85,
-		0x3c6ef372,
-		0xa54ff53a,
-		0x510e527f,
-		0x9b05688c,
-		0x1f83d9ab,
-		0x5be0cd19
+		0x6a09e667, 0xbb67ae85,
+		0x3c6ef372, 0xa54ff53a,
+		0x510e527f, 0x9b05688c,
+		0x1f83d9ab, 0x5be0cd19
 	};
 
 	// section 4.2.2
@@ -143,19 +100,15 @@ void sha256()
 	0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
   };
 
-	// Current message block
-	uint32_t M[16] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	int i, t; 
+	// loop through the message blocks as per page 22
+	while (nextmsgblock(msgf, &M, &S, &nobits)) {
 
-	int i, t;
-
-	// loop thtough the message blocks as per page 22
-	for (i = 0; i < 1; i++)
-	{
 		// for loop, from page 22, W[t] = M[t] 
 		// for 0 <= t <= 15
 		for (t = 0; t < 16; t++)
 		{
-			W[t] = M[t];
+			W[t] = M.t[t];
 		}
 
 		// loops through the rest, page 22
@@ -169,7 +122,7 @@ void sha256()
 		e = H[4]; f = H[5]; g = H[6]; h = H[7];
 
 		// step 3.
-		for (int t = 0; t < 64; t++)
+		for (t = 0; t < 64; t++)
 		{
 			T1 = h + SIG1(e) + Ch(e, f, g) + K[t] + W[t];
 			T2 = SIG0(a) + Maj(a, b, c);
@@ -185,17 +138,92 @@ void sha256()
 		}
 
 		// step 4.
-		H[0] = a + H[0];
-		H[1] = b + H[1];
-		H[2] = c + H[2];
-		H[3] = d + H[3];
-		H[4] = e + H[4];
-		H[5] = f + H[5];
-		H[6] = g + H[6];
-		H[7] = h + H[7];
+		H[0] = a + H[0]; H[1] = b + H[1];
+		H[2] = c + H[2]; H[3] = d + H[3];
+		H[4] = e + H[4]; H[5] = f + H[5];
+		H[6] = g + H[6]; H[7] = h + H[7];
 
 	}
-	printf("%x %x %x %x %x %x %x %x \n", H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]);
+	printf("%08x %08x %08x %08x %08x %08x %08x %08x \n", H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]);
+}
+
+int nextmsgblock(FILE *msgf, union msgblock *M, enum status *S, uint64_t *nobits)
+{
+	// number for bytes from fread
+	uint64_t nobytes;
+
+	// if we finish all the message blocks , is finished
+	if (*S == FINISH) {
+		return 0;
+	}
+
+	int i;
+
+	if (*S == PAD0 || *S == PAD1) {
+		// set the first 56 bytes to 0
+		for (i = 0; i < 56; i++) {
+			M->e[i] = 0x00;
+		}
+		// set the last 64 bits to integer should be big endian.
+		M->s[7] = *nobits;
+		*S = FINISH;
+	}
+	// if s was PAD1, set the first bit of M  to 1.
+	if (S == PAD1) {
+		M->e[0] = 0x80;
+		// keep the loop in 256 for one more iteration
+		return 1;
+	}
+
+	// if we get here, have not finished reading file (S == READ).
+	nobytes = fread(M->e, 1, 64, msgf);
+	// printing number of bytes in file in 64 block buckets
+	// calculating the total bits within the byte 
+	*nobits = *nobits + (nobytes * 8);
+	// if read in less than 56 bytes, we can put the padding in this block
+	if (nobytes < 56) {
+		// add the one bit
+		M->e[nobytes] = 0x80;
+		// add zero bits until last 64
+		while (nobytes < 56) {
+			nobytes = nobytes + 1;
+			M->e[nobytes] = 0x00;
+		}
+		// append the file size in bits as a unsigned 64 bit
+		M->s[7] = nobits;
+		// we are finished
+		*S = FINISH;
+	// otherwise check if we can put some padding in this message block
+	}
+	else if (nobytes < 64) {
+		// tell S we need another message block 
+		*S = PAD0;
+		// put the one bit in to the current block
+		M->e[nobytes] = 0x80;
+		// pad the rest of the block with zeros
+		while (nobytes < 64) {
+			nobytes = nobytes + 1;
+			M->e[nobytes] = 0x00;
+		}
+	}
+	// otherwise check if we are just at the end of the file
+	else if (feof(msgf)) {
+		// tell S that we need a message block with all the padding
+		*S = PAD1;
+	}
+
+	// returns 1 so it loops this function
+	return 1;
+}
+
+uint32_t rotr(uint32_t n, uint32_t x)
+{
+	return (x >> n) | (x << (32 - n));
+}
+
+uint32_t shr(uint32_t n, uint32_t x)
+{
+	return (x >> n);
 }
 
 uint32_t sig0(uint32_t x)
@@ -209,16 +237,6 @@ uint32_t sig1(uint32_t x)
 	// Section 3.2 & 4.1.2 for reference 
 	return (rotr(17, x) ^ rotr(19, x) ^ shr(10, x));
 
-}
-
-uint32_t rotr(uint32_t n, uint32_t x)
-{
-	return (x >> n) | (x << (32 - n));
-}
-
-uint32_t shr(uint32_t n, uint32_t x)
-{
-	return (x >> n);
 }
 
 // Section 4.1.2
@@ -236,10 +254,10 @@ uint32_t SIG1(uint32_t x)
 // Choosing 
 uint32_t Ch(uint32_t x, uint32_t y, uint32_t z) 
 {
-	return (x & y) ^ ((!x) & z);
+	return ((x & y) ^ ((!x) & z));
 }
 // Majority 
 uint32_t Maj(uint32_t x, uint32_t y, uint32_t z) 
 {
-	return (x & y) ^ (x & z) ^ (y & z);
+	return ((x & y) ^ (x & z) ^ (y & z));
 }

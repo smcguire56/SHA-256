@@ -62,7 +62,7 @@ The file must exist in the same directory as the main.c file and you must also i
 2.   Later does a check to change to big endian if required. 
 3.   append the file size in bits as a unsigned 64 bit
 4.   Later pads the rest with all zeros.
-
+s
 ## Authors
 
 * **Sean McGuire** - [GitHub](https://github.com/smcguire56)

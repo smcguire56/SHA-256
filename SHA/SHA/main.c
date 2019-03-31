@@ -70,6 +70,7 @@ int main(int argc, char *argv[])
 	// run the SHA algorithm on the file
 	sha256(msgf, H);
 
+	// printing number of bytes in file in 64 block buckets
 	printf("%08x %08x %08x %08x %08x %08x %08x %08x \n", H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]);
 
 	// close the file
@@ -227,7 +228,6 @@ int nextmsgblock(FILE *msgf, union msgblock *M, enum status *S, uint64_t *nobits
 
 	// if we get here, have not finished reading file (S == READ).
 	nobytes = fread(M->e, 1, 64, msgf);
-	// printing number of bytes in file in 64 block buckets
 	// calculating the total bits within the byte 
 	*nobits = *nobits + (nobytes * 8);
 	// if read in less than 56 bytes, we can put the padding in this block

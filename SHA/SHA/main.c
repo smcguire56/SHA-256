@@ -128,8 +128,6 @@ uint32_t * sha256(FILE *msgf, uint32_t H[8])
 	// Two temporary variables (SECTION 6.2).
 	uint32_t T1, T2;
 
-
-
 	int i, t; 
 	// loop through the message blocks as per page 22
 	while (nextmsgblock(msgf, &M, &S, &nobits)) {

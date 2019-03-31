@@ -1,12 +1,12 @@
 ﻿  main.c
-c:\users\sean\desktop\sha-256\sha\sha\main.c(77): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\sean\desktop\sha-256\sha\sha\main.c(88): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.17763.0\ucrt\stdio.h(1274): note: see declaration of 'scanf'
-c:\users\sean\desktop\sha-256\sha\sha\main.c(79): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\sean\desktop\sha-256\sha\sha\main.c(90): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.17763.0\ucrt\stdio.h(208): note: see declaration of 'fopen'
-c:\users\sean\desktop\sha-256\sha\sha\main.c(84): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\sean\desktop\sha-256\sha\sha\main.c(95): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.17763.0\ucrt\stdio.h(1274): note: see declaration of 'scanf'
-c:\users\sean\desktop\sha-256\sha\sha\main.c(85): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\sean\desktop\sha-256\sha\sha\main.c(96): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.17763.0\ucrt\stdio.h(208): note: see declaration of 'fopen'
-c:\users\sean\desktop\sha-256\sha\sha\main.c(72): warning C4101: 'userInput': unreferenced local variable
-c:\users\sean\desktop\sha-256\sha\sha\main.c(133): warning C4101: 'i': unreferenced local variable
+c:\users\sean\desktop\sha-256\sha\sha\main.c(83): warning C4101: 'userInput': unreferenced local variable
+c:\users\sean\desktop\sha-256\sha\sha\main.c(142): warning C4101: 'i': unreferenced local variable
   SHA.vcxproj -> C:\Users\Sean\Desktop\SHA-256\SHA\Debug\SHA.exe

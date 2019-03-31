@@ -7,6 +7,17 @@
 // for using fixed bit length integers.
 #include <stdint.h>
 
+// macros for checking if is big endian
+#define IS_BIG_ENDIAN (*(uint16_t *)"\0\xff" < 0x100)
+
+// when bytes are in little endian, conversion to big endian for 32 and 64
+#define SWAP_UINT32(x) (((x) >> 24) | (((x) & 0x00FF0000) >> 8) | (((x) & 0x0000FF00) << 8) | ((x) << 24))
+#define SWAP_UINT64(x) \
+	( (((x) >> 56) & 0x00000000000000FF) | (((x) >> 40) & 0x000000000000FF00) | \
+	  (((x) >> 24) & 0x0000000000FF0000) | (((x) >>  8) & 0x00000000FF000000) | \
+	  (((x) <<  8) & 0x000000FF00000000) | (((x) << 24) & 0x0000FF0000000000) | \
+	  (((x) << 40) & 0x00FF000000000000) | (((x) << 56) & 0xFF00000000000000) )
+
 // Represents the message block
 union msgblock {
 	uint8_t e[64];
@@ -92,7 +103,7 @@ FILE* fileHandler()
 uint32_t * sha256(FILE *msgf, uint32_t H[8])
 {
 	// current message block
-	union msgblock M;
+	union msgblock M; 
 
 	// the number of bits read from the file 
 	uint64_t nobits = 0;
@@ -135,7 +146,13 @@ uint32_t * sha256(FILE *msgf, uint32_t H[8])
 		// for loop, from page 22, W[t] = M[t] for 0 <= t <= 15
 		for (t = 0; t < 16; t++)
 		{
-			W[t] = M.t[t];
+			//W[t] = M.t[t];
+			if (IS_BIG_ENDIAN) {
+				W[t] = M.t[t];
+			}
+			else {
+				W[t] = SWAP_UINT32(M.t[t]);
+			}
 		}
 
 		// loops through the rest, page 22
@@ -193,7 +210,12 @@ int nextmsgblock(FILE *msgf, union msgblock *M, enum status *S, uint64_t *nobits
 			M->e[i] = 0x00;
 		}
 		// set the last 64 bits to integer should be big endian.
-		M->s[7] = *nobits;
+		if (IS_BIG_ENDIAN) {
+			M->s[7] = *nobits;
+		}
+		else {
+			M->s[7] = SWAP_UINT64(*nobits);
+		}
 		*S = FINISH;
 	}
 	// if s was PAD1, set the first bit of M  to 1.
@@ -218,7 +240,12 @@ int nextmsgblock(FILE *msgf, union msgblock *M, enum status *S, uint64_t *nobits
 			M->e[nobytes] = 0x00;
 		}
 		// append the file size in bits as a unsigned 64 bit
-		M->s[7] = *nobits;
+		if (IS_BIG_ENDIAN) {
+			M->s[7] = *nobits;
+		}
+		else {
+			M->s[7] = SWAP_UINT64(*nobits);
+		}
 		// we are finished
 		*S = FINISH;
 	// otherwise check if we can put some padding in this message block
@@ -244,6 +271,7 @@ int nextmsgblock(FILE *msgf, union msgblock *M, enum status *S, uint64_t *nobits
 	return 1;
 }
 
+// rotate bits
 uint32_t rotr(uint32_t n, uint32_t x)
 {
 	return (x >> n) | (x << (32 - n));
@@ -282,7 +310,7 @@ uint32_t SIG1(uint32_t x)
 // Choosing 
 uint32_t Ch(uint32_t x, uint32_t y, uint32_t z) 
 {
-	return ((x & y) ^ ((!x) & z));
+	return ((x & y) ^ ((~x) & z));
 }
 // Majority 
 uint32_t Maj(uint32_t x, uint32_t y, uint32_t z) 
